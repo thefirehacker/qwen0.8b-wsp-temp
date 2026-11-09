@@ -11,6 +11,26 @@ python wsp.py write --model Qwen/Qwen3.5-0.8B --facts examples/profile.json --ou
 python run.py ./my-model                                                       # chat with the saved model, plain transformers
 ```
 
+## Run on Modal
+
+`wsp.py` uses bfloat16 as soon as it sees a CUDA GPU, so the app requests an L4. The model download and the edited folder live on a Modal volume named `wsp`, mounted at `/vol`.
+
+```
+modal setup                                              # once: log in; the token is saved for this workspace
+modal volume create wsp                                  # once: skip if the volume already exists
+modal run modal_app.py                                   # write examples/profile.json on an L4, then the GPU stops
+```
+
+`modal run` installs the image, downloads `Qwen/Qwen3.5-0.8B` into `/vol/hf`, writes the fact, and saves the edited model at `/vol/my-model`.
+
+`ask>` is not part of `modal run`, because `wsp.py chat` reads from a keyboard. After the write, open a shell on the same function. That shell keeps the L4 billed until you exit it.
+
+```
+modal shell modal_app.py::write
+cd /root/wsp
+python wsp.py chat --model /vol/my-model --device cuda
+```
+
 The saved folder is the original model with a few `mlp.down_proj` tensors replaced. Anything that loads the base model
 loads it. `wsp_edit.json` inside lists exactly what was written and where.
 
