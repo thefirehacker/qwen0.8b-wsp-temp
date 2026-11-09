@@ -7,3 +7,4 @@ film/*.mp4
 film/*.progress
 TWEETS.md
 film/render.log
+my-model*
